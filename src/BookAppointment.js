@@ -1,5 +1,5 @@
 import emailjs from "emailjs-com";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./BookAppointment.css";
 import { db } from "./firebase";
 import firebase from "firebase";
@@ -9,6 +9,8 @@ import { Modal, TextField } from "@mui/material";
 import { Button, Text } from "native-base";
 import moment from "moment";
 import SelectSlots from "./Component/BookingAppointment/SelectSlots";
+import firebaseApp from 'firebase/app';
+
 
 const dataClass = { firstname: "", lastname: "", address: "", phone: "", user_email: "", };
 
@@ -21,12 +23,26 @@ const formatDateSmall = (timestamp) => {
 const services=[ {label:'Acupuncture'}, {label:'Chinese Herbal Medicine'}, {label:'Cupping'}, {label:'Guasha'}, {label:'Tuina'}, ]
 
 function BookAppointment() {
+  const auth = firebaseApp.auth();
+  const user = auth.currentUser;
   const [data, setData] = useState(dataClass);
   const [dateTime, setDateTime] = useState({ date: new Date(), time: "", });
   const [success, setSuccess] = useState(false);
   const [service, setService] = useState('');
   const [showTime, setShowTime] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
   console.log(formatDateSmall(dateTime?.date))
+
+  useEffect(() => {
+    if(user && user?.uid === '60UCDF2biAdLsbVtPodocfaUqby2') {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  },[])
+          
+
   const sendAppointment = (e) => {
     e.preventDefault();
     console.log('dateTime?.start', dateTime?.time?.start)
@@ -40,25 +56,48 @@ function BookAppointment() {
         "ViQ0OXaS8aiGcBtLl"
       )
       .then((res) => {
-        console.log(res, "email response");
-        db.collection("Bookings")
-          .add({
-            name: data.firstname + "\t" + data.lastname,
-            email: data.user_email,
-            address: data.address,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            bookedDate: dateTime.date.getTime(),
-            bookedTime: dateTime.time,
-            phone: data.phone,
-            service:service,
-            ...dateTime,
-          })
-          .then((res) => {
-            console.log(res, "firebase response");
-            setSuccess(true);
-              alert(
-                "Your Appointment has been booked, Confirmation mail has been sent!" 
-              )
+        if (isAdmin) {
+          console.log("Admin", isAdmin)
+
+          db.collection("CancelledBookings")
+            .add({
+              name: data.firstname + "\t" + data.lastname,
+              email: data.user_email,
+              address: data.address,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              bookedDate: dateTime.date.getTime(),
+              bookedTime: dateTime.time,
+              phone: data.phone,
+              service:service,
+              ...dateTime,
+            })
+            .then((res) => {
+              console.log(res, "firebase response");
+              setSuccess(true);
+                alert(
+                  "Slot Cancelled Successfully" 
+                )
+            }); 
+
+        } else {
+          db.collection("Bookings")
+            .add({
+              name: data.firstname + "\t" + data.lastname,
+              email: data.user_email,
+              address: data.address,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+              bookedDate: dateTime.date.getTime(),
+              bookedTime: dateTime.time,
+              phone: data.phone,
+              service:service,
+              ...dateTime,
+            })
+            .then((res) => {
+              console.log(res, "firebase response");
+              setSuccess(true);
+                alert(
+                  "Your Appointment has been booked, Confirmation mail has been sent!" 
+                )
             // db.collection('BookedSlots')
             // .add({
             //   email: data.user_email,
@@ -74,7 +113,8 @@ function BookAppointment() {
             // .catch(e=>{
             //   console.log(e,'booked slots exception')
             // })
-          });
+            }); 
+        }
       })
       .catch((e) => {
         console.log(e);
@@ -95,7 +135,7 @@ function BookAppointment() {
             Here we'll show welcome message and assurance of treatment of some
             positive words
           </p> */}
-          <h2>For Help Call: +61 0437288166</h2>
+          <h2>For Help Call: xx xxxxxxxxxx</h2>
         </div>
         <form className="bookRight" onSubmit={sendAppointment}>
           <Text fontSize="3xl" fontWeight="bold" my="3">

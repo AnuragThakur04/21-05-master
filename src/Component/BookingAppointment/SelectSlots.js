@@ -10,37 +10,46 @@ const SelectSlots = ({ data, setData, close }) => {
   const [tslots, setTslots] = useState([]);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [selectedTime, setSelectedTime] = useState(null);
+  const  [cancelBooking, setCancelBooking] = useState([]);
   useEffect(() => {
     if (data.time) {
       setSelectedTime(data.time)
     }
     timeSlots();
-    let alreadyBookedSlots = [];
-    // db.collection("BookedSlots").onSnapshot((e) => {
-      
-    //   e.docs.forEach((doc) => { 
-    //     console.log("DATAINTIME---", data.date.getTime(), doc.data().date, data.date.getTime() === doc.data().date)
-    //     if(data && data.date.getTime() === doc.data().date) {
-    //       alreadyBookedSlots.push(doc.data().time)
-    //     }
-    //   })
-    //   setBookedSlots(alreadyBookedSlots)
+    const alreadyBookedSlots = [];
 
-    // });
-    db.collection("Bookings").onSnapshot((e) => {
+    db.collection("CancelledBookings").onSnapshot((e) => {
       
       e.docs.forEach((doc) => { 
-        console.log("DATAINTIME---", data.date.getTime(), doc.data().bookedDate, data.date.getTime() === doc.data().date)
+        if(data && data.date.getTime() === doc.data().bookedDate) {
+          alreadyBookedSlots.push(doc.data().bookedTime)
+          console.log("Time", doc.data().bookedTime)
+        }
+      })
+      console.log("AlreadyBooked", alreadyBookedSlots)
+
+      setCancelBooking(alreadyBookedSlots)
+    });
+
+    // console.log("CancelledSlots", alreadyBookedSlots)
+    let docs = [];
+    db.collection("Bookings").onSnapshot((e) => {
+      e.docs.forEach((doc) => { 
+        console.log("Check", data.date.getTime(), doc.data().bookedDate, data.date.getTime() === doc.data().bookedDate)
+
         if(data && data.date.getTime() === doc.data().bookedDate) {
           alreadyBookedSlots.push(doc.data().bookedTime)
         }
+
       })
+
       setBookedSlots(alreadyBookedSlots)
 
     });
+
+
   }, [navigation, data]);
 
-  console.log('booked',bookedSlots)
 
   const timeSlots = () => {
     var x = {
@@ -116,7 +125,7 @@ const SelectSlots = ({ data, setData, close }) => {
             {tslots &&
               tslots.filter(res =>
                 {
-                  const isSlotBooked = bookedSlots.findIndex((bookedS) => {
+                  const isSlotBooked = [...cancelBooking,...bookedSlots].findIndex((bookedS) => {
                     return bookedS.id === res.id;
                   })
                   // const temp=bookedSlots.map(e=>{
