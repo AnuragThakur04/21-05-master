@@ -35,7 +35,7 @@ const ChangeSlots = () => {
   return (
     <Container flex="1" mt="10" width={"100vw"} p="4">
       <Box shadow={8} width={"80vw"} p="5" className="glassHead">
-        <Text fontSize="xl">Cancel Bookings</Text>
+        <Text fontSize="xl">Unavailable Slots</Text>
       </Box>
       {data.length > 0 ? (
         data.map((item) => <BookingsCard data={item} key={data?.id} />)
